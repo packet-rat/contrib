@@ -1,0 +1,70 @@
+<project name="STIX Bindings" default="all" basedir=".">
+
+  <target name="clean" description="clean">
+    <delete dir="src" />
+    <mkdir dir="src"/>
+    <delete dir="build" />
+    <mkdir dir="build"/>
+    <delete dir="dist" />
+    <mkdir dir="dist"/>
+  </target>
+
+  <target name="bindings" description="Compile bindings">
+    <exec executable="xjc">
+        <arg value="-extension"/>
+        <arg value="-b"/>
+        <arg value="oasisBindings.xjb"/>
+        <arg value="-d"/>
+        <arg value="src"/>
+        <arg value="stix/cybox/cybox_core.xsd"/>
+        <arg value="stix/cybox/cybox_common.xsd"/>
+        <arg value="stix/cybox/cybox_default_vocabularies.xsd"/>
+        <arg value="stix/cybox/objects/"/>
+        <arg value="stix/stix_core.xsd"/>
+        <arg value="stix/stix_common.xsd"/>
+        <arg value="stix/stix_default_vocabularies.xsd"/>
+        <arg value="stix/campaign.xsd"/>
+        <arg value="stix/course_of_action.xsd"/>
+        <arg value="stix/exploit_target.xsd"/>
+        <arg value="stix/data_marking.xsd"/>
+        <arg value="stix/incident.xsd"/>
+        <arg value="stix/indicator.xsd"/>
+        <arg value="stix/threat_actor.xsd"/>
+        <arg value="stix/ttp.xsd"/>
+        <arg value="stix/extensions/"/>
+        <arg value="stix/external/"/>
+    </exec>
+  </target>
+
+  <target name="compile">
+    <mkdir dir="build"/>
+    <javac srcdir="src" destdir="build"/>
+    
+    <!-- Move CybOX into a separate subdirectory -->
+    <mkdir dir="build/cybox/org/mitre/cybox" />
+    <move file="build/org/mitre/cybox" tofile="build/cybox/org/mitre/cybox"/>
+
+    <!-- Everything else goes into the STIX directory -->
+    <mkdir dir="build/stix/org/mitre/stix" />
+    <move todir="build/stix">
+        <fileset dir="build">
+            <include name="**/**" />
+            <exclude name="stix/**" />
+            <exclude name="cybox/**" />
+        </fileset>
+    </move>
+  </target>
+
+  <target name="jar">
+    <mkdir dir="dist"/>
+    <jar destfile="dist/stix_bindings.jar" basedir="build/stix" />
+    <jar destfile="dist/cybox_bindings.jar" basedir="build/cybox" />
+  </target>
+
+  <target name="all">
+    <antcall target="clean" />
+    <antcall target="bindings" />
+    <antcall target="compile" />
+    <antcall target="jar" />
+  </target>
+</project>
