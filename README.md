@@ -14,7 +14,7 @@ When submitting a utility to this repository make sure that the following requir
 * The code includes a README, detailing its intended use
 * The code must exist within its own directory
 
-If a script directly produces, consumes, or otherwise makes use of structured cyber threat information expressed as [STIX](http://stix.mitre.org), it may be requested that the script be moved to the STIX Tools repository, or another more specialized repository.
+If a script directly produces, consumes, or otherwise makes use of structured cyber threat information expressed as [STIX](http://stix.mitre.org), it may be requested that the script be moved to another more specialized repository.
 
 Disclaimer
 ----------
