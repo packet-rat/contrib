@@ -41,7 +41,7 @@ def get_node_type(node):
         return 'Unknown'
 
 
-def handle_marking(marking):
+def handle_marking(marking, include_all=False):
     id = marking.attrib.get('id')
     print "Parsing Marking with id=%s" % id
 
@@ -74,9 +74,17 @@ def handle_marking(marking):
         print "Matching Nodes:"
         for result in results:
             t = get_node_type(result)
+
+            # Ignore comments
+            if not include_all and t == "Comment":
+                continue
+
             if t == "Element":
                 v = result.tag
             else:
+                if not include_all and not str(result).strip():
+                    # Text is empty or whitespace only.
+                    continue
                 v = repr(result)
             print "\t", t, ":", v
 
@@ -84,6 +92,10 @@ def handle_marking(marking):
 def main():
     parser = argparse.ArgumentParser("STIX Data Marking Parser")
     parser.add_argument("file", help="The STIX document to parse.")
+    parser.add_argument("-a", "--all", dest="all", action="store_true",
+                        default=False,
+                        help="Include all XML nodes, including comments and "
+                        "whitespace-only strings.")
     args = parser.parse_args()
 
     e = etree.parse(args.file).getroot()
@@ -99,7 +111,7 @@ def main():
     for handling in handlings:
         # Iterate over each Marking element in the Handling element
         for marking in handling:
-            handle_marking(marking)
+            handle_marking(marking, include_all=args.all)
             print "===================================================="
 
 if __name__ == "__main__":
