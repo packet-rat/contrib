@@ -6,8 +6,10 @@
 Locate STIX Data Markings and identify which fields are marked.
 """
 
-from lxml import etree
 import argparse
+import sys
+
+from lxml import etree
 
 NSMAP = {
     'stix': 'http://stix.mitre.org/stix-1',
@@ -27,9 +29,9 @@ MARKING_XPATH = ("//stix:Handling|//campaign:Handling|//indicator:Handling|"
 
 
 def get_node_type(node):
-    if node.__class__.__name__ == '_Element':
+    if node.__class__ is etree._Element:
         return 'Element'
-    elif node.__class__.__name__ == '_Comment':
+    elif node.__class__ is etree._Comment:
         return 'Comment'
     elif node.is_attribute:
         return 'Attribute'
@@ -42,51 +44,53 @@ def get_node_type(node):
 
 
 def handle_marking(marking, include_all=False):
-    id = marking.attrib.get('id')
-    print "Parsing Marking with id=%s" % id
+    marking_id = marking.attrib.get('id')
+    print "Parsing Marking with id=%s" % marking_id
 
     try:
         controlled_structure = marking.xpath('./marking:Controlled_Structure',
                                              namespaces=NSMAP)[0]
-    except:
+    except IndexError:
         msg = "ERROR: Marking %s contains no Controlled_Structure elements"
-        raise Exception(msg % id)
+        print msg % marking_id
+        sys.exit(1)
 
-    try:
-        marking_structures = marking.xpath('./marking:Marking_Structure',
-                                           namespaces=NSMAP)
-        print "Found these Marking_Structure elements:"
-        for marking_structure in marking_structures:
-            # Is it possible to do better than just print out the element?
-            # E.g., for TLP:RED, it would be nice to print out TLP:RED
-            print "\t", etree.tostring(marking_structure)
-    except Exception as e:
-
+    marking_structures = marking.xpath('./marking:Marking_Structure',
+                                       namespaces=NSMAP)
+    if not marking_structures:
         msg = "ERROR: Marking %s contains no Marking_Structure elements"
-        raise Exception(msg % id)
+        print msg % marking_id
+        sys.exit(1)
+
+    print "Found these Marking_Structure elements:"
+    for marking_structure in marking_structures:
+        # Is it possible to do better than just print out the element?
+        # E.g., for TLP:RED, it would be nice to print out TLP:RED
+        print "\t", etree.tostring(marking_structure)
 
     print "Evaluating XPath: ", controlled_structure.text
     results = controlled_structure.xpath(controlled_structure.text,
                                          namespaces=controlled_structure.nsmap)
-    print "Nodes that matched XPath: ", len(results)
+    note = ""
+    if not include_all:
+        note = " (including comments and whitespace-only nodes, omitted below)"
+    print "%d nodes matching XPath%s: " % (len(results), note)
 
-    if len(results) > 0:
-        print "Matching Nodes:"
-        for result in results:
-            t = get_node_type(result)
+    for result in results:
+        node_type = get_node_type(result)
 
-            # Ignore comments
-            if not include_all and t == "Comment":
+        # Ignore comments
+        if not include_all and node_type == "Comment":
+            continue
+
+        if node_type == "Element":
+            value = result.tag
+        else:
+            if not include_all and not str(result).strip():
+                # Text is empty or whitespace only.
                 continue
-
-            if t == "Element":
-                v = result.tag
-            else:
-                if not include_all and not str(result).strip():
-                    # Text is empty or whitespace only.
-                    continue
-                v = repr(result)
-            print "\t", t, ":", v
+            value = repr(result)
+        print "\t", node_type, ":", value
 
 
 def main():
@@ -98,13 +102,13 @@ def main():
                         "whitespace-only strings.")
     args = parser.parse_args()
 
-    e = etree.parse(args.file).getroot()
-    stix_version = e.attrib.get('version')
+    root = etree.parse(args.file).getroot()
+    stix_version = root.attrib.get('version')
     if stix_version != '1.1.1':
         raise Exception("This parser only works with STIX 1.1.1 documents. "
                         "The version specified was %s" % stix_version)
 
-    handlings = e.xpath(MARKING_XPATH, namespaces=NSMAP)
+    handlings = root.xpath(MARKING_XPATH, namespaces=NSMAP)
     print "Parsing Data Markings for: %s" % args.file
 
     # Iterate over each handling element found
