@@ -90,7 +90,7 @@ def handle_marking(marking, include_all=False):
 
 
 def main():
-    parser = argparse.ArgumentParser("STIX Data Marking Parser")
+    parser = argparse.ArgumentParser(description="STIX Data Marking Parser")
     parser.add_argument("file", help="The STIX document to parse.")
     parser.add_argument("-a", "--all", dest="all", action="store_true",
                         default=False,
