@@ -1,0 +1,13 @@
+
+# compiled python modules
+*.py[co]
+
+# eclipse project files
+*.project
+*.pydevproject
+*.settings
+
+# pycharm
+.idea/
+.idea
+
