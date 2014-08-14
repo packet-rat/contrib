@@ -28,7 +28,7 @@ from cybox.objects.address_object import Address
 def main():
     # get args
     parser = argparse.ArgumentParser(
-        descriptio="Parse an input JSON file and output STIX XML ",
+        description="Parse an input JSON file and output STIX XML ",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument("infile",help="input file")
