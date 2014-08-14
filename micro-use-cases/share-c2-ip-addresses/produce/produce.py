@@ -15,22 +15,17 @@ from cybox.objects.socket_address_object import SocketAddress
 
 def main():
     # get args
-    parser = argparse.ArgumentParser ( description = "Parse an input JSON file and output STIX XML to stdout"
+    parser = argparse.ArgumentParser ( description = "Parse an input JSON file and output STIX XML "
     , formatter_class=argparse.ArgumentDefaultsHelpFormatter )
 
     parser.add_argument("infile",help="input file")
-    parser.add_argument("--outfile","-o", help="input file")
+    parser.add_argument("--outfile","-o", help="output file")
 
     args = parser.parse_args()
     
     # we assume the input file is a flat JSON file 
     # format 'bot_name':[list,of,ips]
     content = json.load(open(args.infile))
-
-    # DBG
-    for item in content:
-        print item
-        print content[item]
         
     # setup stix document
     stix_package = STIXPackage()
@@ -46,6 +41,7 @@ def main():
         indicator = Indicator()
         indicator.title = "IP addresses for " + item
         indicator.description = "Bot connecting to control server"
+        indicator.observable_composition_operator = "OR"
 
         # add IP for each in list
         for ip in content[item]:
@@ -59,8 +55,9 @@ def main():
         stix_package.add_indicator(indicator)
 
         
-# output to XML or given file
-    stix_out = stix_package.to_xml() 
+# output to given file
+    schema_dict = {'http://example.com':'http://example.com/stix.xsd'}
+    stix_out = stix_package.to_xml(schemaloc_dict=schema_dict) 
     if args.outfile:
         fd = open(args.outfile,'w')
         fd.write(stix_out)
